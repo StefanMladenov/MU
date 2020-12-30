@@ -1,0 +1,78 @@
+Priprema podataka
+
+Sta treba uraditi sa pocetnim skupom podataka:
+ 1. izbaciti redundantne podatke iz dataseta - smanjuje se overlifting
+ 2. smanjiti zavaravajuce podatke - poboljsava se tacnost
+ 3. smanjiti obim podataka - smanjuje se slozenost i algoritmi se samim tim brze treniraju
+
+Dakle, treba izabrati one kolone koje smatramo da uticu na bolji rezultat igraca.
+
+Postoje 3 tehnike za selekciju matrice buducnosti:
+ 1. Univariate Selection
+ 2. Feature Importance
+ 3. Correlation Matrix with Heatmap
+
+Dataset koji se koristi za demonstraciju ovih tehnika je:
+https://www.kaggle.com/iabhishekofficial/mobile-price-classification#train.csv
+
+Univariate Selection
+ - Statisticki testovi se mogu koristiti za izbor kolona(osobina) koja imaju najjaci odnos sa izlaznom promenljivom.
+   Primer koriscenja biblioteke SelectKBest za izbir odredjenog broja karakteristika. U primeru ispod 10 najboljih karakteristika:
+	import pandas as pd
+	import numpy as np
+	from sklearn.feature_selection import SelectKBest
+	from sklearn.feature_selection import chi2
+	
+	data = pd.read_csv("D://Blogs//train.csv")
+	X = data.iloc[:,0:20]  #independent columns
+	y = data.iloc[:,-1]    #target column i.e price range
+
+	#apply SelectKBest class to extract top 10 best features
+	bestfeatures = SelectKBest(score_func=chi2, k=10)
+	fit = bestfeatures.fit(X,y)
+	dfscores = pd.DataFrame(fit.scores_)
+	dfcolumns = pd.DataFrame(X.columns)
+	#concat two dataframes for better visualization 
+	featureScores = pd.concat([dfcolumns,dfscores],axis=1)
+	featureScores.columns = ['Specs','Score']  #naming the dataframe columns
+	print(featureScores.nlargest(10,'Score'))  #print 10 best features
+
+Feature Importance
+ Vaznost karakteristike(kolone) daje score svakoj karakteristici iz dataseta. Sto je veci score to je karatkeristika bitnija.
+ Za prethodno 10 izvucenih osobina dodeljuje score svakoj karakteristici:
+       	 import pandas as pd
+	 import numpy as np
+
+	data = pd.read_csv("D://Blogs//train.csv")
+	X = data.iloc[:,0:20]  #independent columns
+	y = data.iloc[:,-1]    #target column i.e price range
+	from sklearn.ensemble import ExtraTreesClassifier
+	import matplotlib.pyplot as plt
+	model = ExtraTreesClassifier()
+	model.fit(X,y)
+	print(model.feature_importances_) #use inbuilt class feature_importances of tree based classifiers
+	#plot graph of feature importances for better visualization
+	feat_importances = pd.Series(model.feature_importances_, index=X.columns)
+	feat_importances.nlargest(10).plot(kind='barh')
+	plt.show()
+
+Correlation Matrix with Heatmap
+ Korelacija - kako su karakteristike povezane jedna u odnosu na drugu ili u odnosu na izlaznu(ciljnu vrednost).
+ Korelacija moze da bude pozitivna(povecava se vrednost karakteristike i ciljna vrednost) ili negativna(povecava se vrednost karakteristike a smanjuje se ciljna vrednost).
+
+HeatMapa se koristi da se lako uoce one karakteristike koje su bitnije za izracunavanje ciljne vrednosti.
+ Za primer iznad HeatMapa se dobija primenom sledeceg koda:
+	import pandas as pd
+	import numpy as np
+	import seaborn as sns
+
+	data = pd.read_csv("D://Blogs//train.csv")
+	X = data.iloc[:,0:20]  #independent columns
+	y = data.iloc[:,-1]    #target column i.e price range
+	#get correlations of each features in dataset
+	corrmat = data.corr()
+	top_corr_features = corrmat.index
+	plt.figure(figsize=(20,20))
+	#plot heat map
+	g=sns.heatmap(data[top_corr_features].corr(),annot=True,cmap="RdYlGn")
+
